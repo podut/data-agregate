@@ -1,0 +1,609 @@
+openapi: 3.1.0
+info:
+  title: RSS Aggregator PRO
+  description: |
+    Backend service pentru agregarea și managementul știrilor RSS.
+    Suportă ingestare feed-uri RSS, filtrare după categorie/tag, profil utilizator per-device,
+    scheduler automat și integrare SERP/Google News.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Ingest
+    description: Ingestare și sincronizare feed-uri RSS
+  - name: Articles
+    description: Accesare și filtrare articole
+  - name: Categories
+    description: Management categorii și feed-uri RSS
+  - name: Profile
+    description: Profil utilizator per-device
+  - name: Scheduler
+    description: Configurare interval sincronizare automată
+  - name: SERP
+    description: Integrare Google News / SerpAPI
+
+paths:
+
+  # ─── Ingest ──────────────────────────────────────────────────────────────────
+
+  /ingest:
+    post:
+      tags: [Ingest]
+      summary: Ingestează URL-uri RSS pentru o categorie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RSSRequest'
+            example:
+              urls:
+                - "https://techcrunch.com/feed/"
+                - "https://hnrss.org/frontpage"
+              category: "Tech"
+      responses:
+        "202":
+          description: Acceptat – procesare în background
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /sync-all:
+    post:
+      tags: [Ingest]
+      summary: Declanșează sincronizarea tuturor feed-urilor active
+      responses:
+        "200":
+          description: Sincronizare pornită
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  # ─── Scheduler ───────────────────────────────────────────────────────────────
+
+  /scheduler/config:
+    get:
+      tags: [Scheduler]
+      summary: Returnează intervalul curent al scheduler-ului
+      responses:
+        "200":
+          description: Configurație scheduler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchedulerConfig'
+    put:
+      tags: [Scheduler]
+      summary: Actualizează intervalul scheduler-ului (ore)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchedulerConfig'
+            example:
+              interval_hours: 6
+      responses:
+        "200":
+          description: Interval actualizat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  interval_hours: { type: integer }
+
+  /scheduler/run-now:
+    post:
+      tags: [Scheduler]
+      summary: Rulează sincronizarea imediat (ignoră intervalul)
+      responses:
+        "200":
+          description: Sincronizare executată
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  # ─── Articles ────────────────────────────────────────────────────────────────
+
+  /articles:
+    get:
+      tags: [Articles]
+      summary: Listează toate articolele (ordonate descrescător după dată)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: Listă articole
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Article'
+
+  /articles/by-tag:
+    get:
+      tags: [Articles]
+      summary: Filtrează articole după tag (case-insensitive, căutare în câmpul tags JSON)
+      parameters:
+        - name: tag
+          in: query
+          required: true
+          description: Tagul de căutat (ex. "ai & tools", "programming")
+          schema: { type: string }
+          example: "programming"
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: Articole care conțin tag-ul specificat
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TechNews'
+
+  /articles/push:
+    post:
+      tags: [Articles]
+      summary: Inserează manual articole (bulk push extern)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  title: { type: string }
+                  link: { type: string }
+                  contentSnippet: { type: string }
+                  source: { type: string }
+                  image: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Articole inserate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  inserted: { type: integer }
+
+  /digest:
+    get:
+      tags: [Articles]
+      summary: Returnează digest personalizat de articole pentru un device
+      parameters:
+        - name: deviceId
+          in: query
+          required: false
+          description: ID-ul device-ului pentru personalizare după interese
+          schema: { type: string }
+      responses:
+        "200":
+          description: Digest de știri rankat după interese
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  digest_date: { type: string, format: date }
+                  news:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TechNews'
+        "404":
+          description: Nu există articole
+
+  # ─── Categories ──────────────────────────────────────────────────────────────
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Listează toate categoriile cu feed-urile și numărul de articole
+      responses:
+        "200":
+          description: Listă categorii
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeedCategory'
+    post:
+      tags: [Categories]
+      summary: Creează o categorie nouă (cu opțional URL-uri RSS)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+            example:
+              name: "AI & Tools"
+              rss_urls:
+                - "https://www.artificialintelligence-news.com/feed/"
+      responses:
+        "200":
+          description: Categorie creată
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /categories/{category}:
+    delete:
+      tags: [Categories]
+      summary: Șterge o categorie și dezactivează feed-urile asociate
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Categorie ștearsă
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /categories/{category}/articles:
+    get:
+      tags: [Categories]
+      summary: Returnează articolele unei categorii (format TechNews, compatibil Android)
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: Articole din categorie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TechNews'
+
+  # ─── Feeds ───────────────────────────────────────────────────────────────────
+
+  /categories/{category}/feeds:
+    post:
+      tags: [Categories]
+      summary: Adaugă un feed RSS la o categorie
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RssFeedRequest'
+            example:
+              url: "https://techcrunch.com/feed/"
+      responses:
+        "200":
+          description: Feed adăugat
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+    delete:
+      tags: [Categories]
+      summary: Șterge un feed RSS dintr-o categorie
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RssFeedRequest'
+      responses:
+        "200":
+          description: Feed șters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /categories/{category}/feeds/toggle:
+    put:
+      tags: [Categories]
+      summary: Activează / dezactivează un feed fără a-l șterge
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RssFeedRequest'
+            example:
+              url: "https://techcrunch.com/feed/"
+              is_active: false
+      responses:
+        "200":
+          description: Stare feed actualizată
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  is_active: { type: boolean }
+        "404":
+          description: Feed negăsit
+
+  # ─── SERP ────────────────────────────────────────────────────────────────────
+
+  /categories/{category}/serp:
+    put:
+      tags: [SERP]
+      summary: Configurează interogarea Google News / SerpAPI pentru o categorie
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SerpConfigUpdate'
+            example:
+              query: "artificial intelligence 2025"
+              region: "us"
+              enabled: true
+      responses:
+        "200":
+          description: Configurație SERP actualizată
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /categories/{category}/serp/fetch:
+    post:
+      tags: [SERP]
+      summary: Declanșează o căutare imediată prin SERP / Google News RSS
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Căutare pornită în background
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  mode: { type: string, enum: [serpapi, google_news_rss] }
+        "400":
+          description: SERP nu este activat sau nu are query configurat
+
+  # ─── Profile ─────────────────────────────────────────────────────────────────
+
+  /profile:
+    post:
+      tags: [Profile]
+      summary: Creează sau actualizează profilul unui device cu interesele selectate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileSync'
+            example:
+              deviceId: "abc123"
+              favoriteCategories: ["AI & Tools", "Programming"]
+              name: "Reader"
+      responses:
+        "200":
+          description: Profil sincronizat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  deviceId: { type: string }
+                  favorites: { type: string }
+
+  /profile/{deviceId}:
+    get:
+      tags: [Profile]
+      summary: Returnează profilul unui device
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Profil device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+# ─── Schemas ─────────────────────────────────────────────────────────────────
+
+components:
+  schemas:
+
+    RSSRequest:
+      type: object
+      required: [urls, category]
+      properties:
+        urls:
+          type: array
+          items: { type: string, format: uri }
+        category:
+          type: string
+
+    RssFeedRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+        is_active:
+          type: boolean
+          nullable: true
+
+    CategoryCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        rss_urls:
+          type: array
+          items: { type: string, format: uri }
+          default: []
+
+    SerpConfigUpdate:
+      type: object
+      required: [query]
+      properties:
+        query: { type: string }
+        region: { type: string, default: "us" }
+        enabled: { type: boolean, default: true }
+
+    UserProfileSync:
+      type: object
+      required: [deviceId]
+      properties:
+        deviceId: { type: string }
+        favoriteCategories:
+          type: array
+          items: { type: string }
+          default: []
+        name: { type: string, default: "Reader" }
+
+    SchedulerConfig:
+      type: object
+      required: [interval_hours]
+      properties:
+        interval_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          description: Interval în ore între sincronizări automate
+
+    StatusResponse:
+      type: object
+      properties:
+        status: { type: string }
+
+    FeedConfig:
+      type: object
+      properties:
+        url: { type: string, format: uri }
+        is_active: { type: boolean }
+
+    SerpConfig:
+      type: object
+      properties:
+        query: { type: string, nullable: true }
+        region: { type: string }
+        enabled: { type: boolean }
+
+    FeedCategory:
+      type: object
+      properties:
+        name: { type: string }
+        feeds:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedConfig'
+        article_count: { type: integer }
+        serp:
+          $ref: '#/components/schemas/SerpConfig'
+
+    Article:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        url: { type: string, format: uri }
+        category: { type: string }
+        summary: { type: string }
+        source_name: { type: string }
+        image_url: { type: string, nullable: true }
+        created_at: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+
+    TechNews:
+      type: object
+      description: Format compatibil cu clientul Android
+      properties:
+        title: { type: string }
+        link: { type: string, format: uri }
+        category: { type: string }
+        summary: { type: string }
+        source: { type: string }
+        image: { type: string, nullable: true }
+        publish_date: { type: string }
+        score:
+          type: integer
+          description: Scor relevanță calculat de AI (0-100)
+        tags:
+          type: array
+          items: { type: string }
+
+    UserProfile:
+      type: object
+      properties:
+        deviceId: { type: string }
+        name: { type: string }
+        favoriteCategories:
+          type: array
+          items: { type: string }
+        interestsScore: { type: integer }
+        lastActive: { type: integer, description: "Unix timestamp ms" }

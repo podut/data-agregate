@@ -1,0 +1,86 @@
+package com.podut.dataagregate.feature.category_articles
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.podut.dataagregate.core.ui.components.ArticleRow
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryArticlesScreen(
+    category: String,
+    onArticleClick: (url: String, title: String) -> Unit,
+    onBack: () -> Unit,
+    viewModel: CategoryArticlesViewModel = hiltViewModel()
+) {
+    LaunchedEffect(category) { viewModel.load(category) }
+
+    val s by viewModel.state.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(category, fontWeight = FontWeight.Bold)
+                        if (s.articles.isNotEmpty())
+                            Text("${s.articles.size} articles", fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                }
+            )
+        },
+        containerColor = Color(0xFF0F0F17)
+    ) { padding ->
+        Box(Modifier.fillMaxSize().background(Color(0xFF0F0F17)).padding(padding)) {
+            when {
+                s.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CircularProgressIndicator(color = Color(0xFF8A2BE2))
+                        Text("Loading $category…", color = Color.LightGray, fontSize = 13.sp)
+                    }
+                }
+                s.error != null -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(s.error ?: "", color = Color(0xFFEF4444), fontSize = 13.sp)
+                        Button(onClick = { viewModel.load(category) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A2BE2))
+                        ) { Text("Retry") }
+                    }
+                }
+                s.articles.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Text("No articles yet for \"$category\"", color = Color.Gray)
+                }
+                else -> LazyColumn(contentPadding = PaddingValues(bottom = 88.dp)) {
+                    items(s.articles, key = { it.link }) { article ->
+                        ArticleRow(
+                            article = article,
+                            isSaved = article.link in s.savedLinks,
+                            onClick  = { onArticleClick(article.link, article.title) },
+                            onSave   = { viewModel.toggleSave(article) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

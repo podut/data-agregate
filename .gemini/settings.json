@@ -1,0 +1,105 @@
+{
+  "mcpServers": {
+    "everything": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-everything"
+      ]
+    },
+    "fetch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\Podut\\Desktop\\Proiecte\\AIRSOFT"
+      ]
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "time": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-time"
+      ]
+    },
+    "mongodb": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "MCP_MONGODB_URI=mongodb://admin:htcmx_secret_2024@localhost:27017/htcmx_tabere?authSource=admin",
+        "--network", "host",
+        "mcp/mongodb"
+      ]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:postgres@localhost:54322/postgres"
+      ]
+    },
+    "web-scrape": {
+      "command": "npx",
+      "args": [
+        "mcp-web-scrape@1.0.7"
+      ]
+    },
+    "local-rag": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-local-rag"
+      ],
+      "env": {
+        "BASE_DIR": "C:\\Users\\Podut\\Desktop\\Proiecte\\AIRSOFT\\docs\\rag_context"
+      }
+    },
+    "jenkins": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://jenkins.db.petrupodut.dev/mcp-server/mcp",
+        "--header",
+        "Authorization: Bearer ${AUTH_TOKEN}"
+      ],
+      "env": {
+        "AUTH_TOKEN": "Basic UG9kdXQgUGV0cnU6MTEzNjU5Y2ZhYjA3OTA4NDkxOWFlZGI0OTM0MTMzYzdiMQ=="
+      }
+    },
+    "decisionnode": {
+      "command": "decide-mcp",
+      "args": []
+    }
+  }
+}
