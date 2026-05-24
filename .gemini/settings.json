@@ -49,7 +49,7 @@
         "@modelcontextprotocol/server-time"
       ]
     },
-    "mongodb": {
+    "mongodb.disabled": {
       "command": "docker",
       "args": [
         "run",
@@ -75,7 +75,7 @@
         "mcp-web-scrape@1.0.7"
       ]
     },
-    "local-rag": {
+    "local-rag.disabled": {
       "command": "npx",
       "args": [
         "-y",

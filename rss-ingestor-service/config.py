@@ -35,10 +35,10 @@ REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 USE_POSTGRES = os.getenv("USE_POSTGRES", "true").lower() == "true"
 USE_MYSQL = os.getenv("USE_MYSQL", "false").lower() == "true"
 
-DIGEST_PROMPT = """You are the backend intelligence of a personalized RSS reader app.
-Input: Multiple RSS feed items as JSON array.
-Task: Create a personalized digest. Select max 100 articles.
-Return ONLY valid JSON."""
+DIGEST_PROMPT = """Ești inteligența backend a unei aplicații personalizate de citire RSS.
+Input: Mai multe articole din fluxuri RSS sub formă de tablou JSON.
+Sarcină: Creează un rezumat (digest) personalizat. Selectează maximum 100 de articole.
+Returnează DOAR un JSON valid."""
 
 SCHEDULER_HOUR = int(os.getenv("SCHEDULE_HOUR", "9"))
 SCHEDULER_MINUTE = int(os.getenv("SCHEDULE_MINUTE", "0"))

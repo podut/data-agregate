@@ -1,25 +1,56 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from database import get_db_connection
-from rss_service import process_feeds_task
 from datetime import datetime
-from config import USE_POSTGRES
+
+from database import db_conn, PLACEHOLDER
+from rss_service import process_feeds_task
+from config import USE_POSTGRES, USE_MYSQL
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 scheduler = AsyncIOScheduler()
 
+
 async def scheduled_sync():
-    print(f"[SCHEDULER] Triggering sync-all at {datetime.now()}")
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    active_val = True if USE_POSTGRES else 1
-    cursor.execute("SELECT url, category FROM rss_sources WHERE is_active = %s" if USE_POSTGRES else "SELECT url, category FROM rss_sources WHERE is_active = 1", (active_val,) if USE_POSTGRES else ())
-    sources = cursor.fetchall()
-    conn.close()
-    
-    by_category = {}
+    logger.info("[SCHEDULER] Triggering sync-all at %s", datetime.now())
+
+    with db_conn(readonly=True) as conn:
+        cursor = conn.cursor()
+        active_val = True if USE_POSTGRES else 1
+        # rss_feeds has UNIQUE(url) — each URL is fetched exactly once
+        cursor.execute(
+            f"SELECT url, category FROM rss_feeds WHERE is_active = {PLACEHOLDER}",
+            (active_val,)
+        )
+        sources = cursor.fetchall()
+
+    by_category: dict[str, list[str]] = {}
     for url, cat in sources:
-        if cat not in by_category: by_category[cat] = []
-        by_category[cat].append(url)
-        
+        by_category.setdefault(cat, []).append(url)
+
     for cat, urls in by_category.items():
         await process_feeds_task(urls, cat)
-    print("[SCHEDULER] sync-all finished")
+
+    logger.info("[SCHEDULER] sync-all finished")
+
+
+async def cleanup_old_articles(days: int = 30):
+    """Deletes articles older than `days` days to keep the DB lean."""
+    with db_conn() as conn:
+        cursor = conn.cursor()
+        if USE_POSTGRES:
+            cursor.execute(
+                f"DELETE FROM pending_articles WHERE created_at < CURRENT_TIMESTAMP - INTERVAL '{days} days'"
+            )
+        elif USE_MYSQL:
+            cursor.execute(
+                f"DELETE FROM pending_articles WHERE created_at < DATE_SUB(NOW(), INTERVAL {days} DAY)"
+            )
+        else:
+            cursor.execute(
+                f"DELETE FROM pending_articles WHERE created_at < datetime('now', '-{days} days')"
+            )
+        deleted = cursor.rowcount
+
+    logger.info("[CLEANUP] Deleted %d articles older than %d days", deleted, days)
+    return deleted

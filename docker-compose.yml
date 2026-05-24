@@ -19,9 +19,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - app-net
 
   db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: data-agregate-db
     restart: always
     environment:
@@ -35,9 +37,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - app-net
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: data-agregate-redis
     restart: always
     command: redis-server --appendonly yes
@@ -48,6 +52,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.bridge.enable_icc: "true"
 
 volumes:
   postgres_data:

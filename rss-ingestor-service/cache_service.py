@@ -1,88 +1,171 @@
 import redis
 import json
+import time
+import re
+import hashlib
 from config import REDIS_HOST, REDIS_PORT
+from logging_config import get_logger
 
-# Initialize Redis client
-# Decode_responses=True helps handle strings instead of bytes
-redis_client = redis.Redis(
-    host=REDIS_HOST, 
-    port=REDIS_PORT, 
-    db=0, 
-    decode_responses=True
-)
+logger = get_logger(__name__)
+
+try:
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
+    redis_client.ping()
+    logger.info("Redis connected at %s:%s", REDIS_HOST, REDIS_PORT)
+except Exception as e:
+    logger.warning("Cannot connect to Redis at %s:%s: %s", REDIS_HOST, REDIS_PORT, e)
+    redis_client = None
+
+_PROCESSED_URLS_KEY  = "processed_urls_zset"
+_TITLE_FP_KEY        = "title_fingerprints_zset"
+_URL_TTL_DAYS        = 7
+_TITLE_TTL_DAYS      = 7
+
+
+def _r():
+    if redis_client is None:
+        raise RuntimeError("Redis unavailable")
+    return redis_client
+
+
+# ─── Digest Cache ─────────────────────────────────────────────────────────────
 
 def get_cached_digest(device_id: str):
-    """Retrieve cached digest for a specific device."""
     try:
-        key = f"digest:{device_id}"
-        cached = redis_client.get(key)
+        cached = _r().get(f"digest:{device_id}")
         if cached:
             return json.loads(cached)
     except Exception as e:
-        print(f"[Redis] Error getting cached digest: {e}")
+        logger.error("Error getting cached digest: %s", e)
     return None
 
+
 def set_cached_digest(device_id: str, data: dict, expire_seconds: int = 900):
-    """Cache digest for 15 minutes (default)."""
     try:
-        key = f"digest:{device_id}"
-        redis_client.setex(key, expire_seconds, json.dumps(data))
+        _r().setex(f"digest:{device_id}", expire_seconds, json.dumps(data))
     except Exception as e:
-        print(f"[Redis] Error setting cached digest: {e}")
+        logger.error("Error setting cached digest: %s", e)
+
+
+def invalidate_digest(device_id: str):
+    """Force refresh on next /digest call for this device."""
+    try:
+        _r().delete(f"digest:{device_id}")
+    except Exception:
+        pass
+
+
+# ─── URL Deduplication ────────────────────────────────────────────────────────
 
 def is_url_seen(url: str) -> bool:
-    """Check if URL was recently processed using a Redis Set."""
     try:
-        return redis_client.sismember("processed_urls", url)
+        score = _r().zscore(_PROCESSED_URLS_KEY, url)
+        if score is None:
+            return False
+        return score > time.time() - (_URL_TTL_DAYS * 86400)
     except:
         return False
 
-def mark_url_processed(url: str, expire_days: int = 7):
-    """Add URL to processed set and handle expiration."""
+
+def mark_url_processed(url: str):
     try:
-        redis_client.sadd("processed_urls", url)
-        # Setele nu au TTL per element, dar putem folosi un set temporar 
-        # sau o cheie separată pentru a expira setul complet dacă devine prea mare
+        r = _r()
+        r.zadd(_PROCESSED_URLS_KEY, {url: time.time()})
+        if int(time.time()) % 100 == 0:
+            r.zremrangebyscore(_PROCESSED_URLS_KEY, "-inf", time.time() - (_URL_TTL_DAYS * 86400))
     except:
         pass
 
+
+# ─── Title Fingerprint Deduplication ─────────────────────────────────────────
+
+def _title_fingerprint(title: str) -> str:
+    """Normalize title and return a short hash for near-duplicate detection."""
+    normalized = re.sub(r'[^\w\s]', '', title.lower())
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    return hashlib.md5(normalized[:80].encode()).hexdigest()[:16]
+
+
+def is_title_duplicate(title: str) -> bool:
+    """Returns True if a very similar title was recently processed."""
+    if not title:
+        return False
+    try:
+        fp = _title_fingerprint(title)
+        score = _r().zscore(_TITLE_FP_KEY, fp)
+        if score is None:
+            return False
+        return score > time.time() - (_TITLE_TTL_DAYS * 86400)
+    except:
+        return False
+
+
+def mark_title_processed(title: str):
+    try:
+        r = _r()
+        fp = _title_fingerprint(title)
+        r.zadd(_TITLE_FP_KEY, {fp: time.time()})
+        if int(time.time()) % 200 == 0:
+            r.zremrangebyscore(_TITLE_FP_KEY, "-inf", time.time() - (_TITLE_TTL_DAYS * 86400))
+    except:
+        pass
+
+
+# ─── Distributed Lock ─────────────────────────────────────────────────────────
+
 def set_processing_lock(lock_name: str, timeout: int = 300) -> bool:
-    """Set a distributed lock to prevent concurrent processing."""
-    return redis_client.set(f"lock:{lock_name}", "true", ex=timeout, nx=True)
+    try:
+        return bool(_r().set(f"lock:{lock_name}", "true", ex=timeout, nx=True))
+    except:
+        return True
+
 
 def release_processing_lock(lock_name: str):
-    """Release the distributed lock."""
-    redis_client.delete(f"lock:{lock_name}")
+    try:
+        _r().delete(f"lock:{lock_name}")
+    except:
+        pass
 
-def get_job_status(job_id: str) -> str:
-    """Get the status of a long-running job."""
-    return redis_client.get(f"job_status:{job_id}")
 
-def set_job_status(job_id: str, status: str, expire: int = 3600):
-    """Set the status of a long-running job."""
-    redis_client.setex(f"job_status:{job_id}", expire, status)
+# ─── Rate Limiting ────────────────────────────────────────────────────────────
 
 def check_rate_limit(key: str, limit: int = 10, period: int = 60) -> bool:
-    """
-    Simple rate limiter. 
-    Returns True if request is allowed, False if limit exceeded.
-    """
     try:
-        current = redis_client.get(f"ratelimit:{key}")
+        r = _r()
+        rk = f"ratelimit:{key}"
+        current = r.get(rk)
         if current and int(current) >= limit:
             return False
-        
-        pipe = redis_client.pipeline()
-        pipe.incr(f"ratelimit:{key}")
-        pipe.expire(f"ratelimit:{key}", period)
+        pipe = r.pipeline()
+        pipe.incr(rk)
+        pipe.expire(rk, period)
         pipe.execute()
         return True
     except:
-        return True # Default to allow if Redis fails
-def clear_all_cache():
-    """Wipe all keys, including rate limits, digests, and processed URLs."""
+        return True
+
+
+# ─── Job Status ───────────────────────────────────────────────────────────────
+
+def get_job_status(job_id: str) -> str:
     try:
-        redis_client.flushdb()
-        print("[Redis] All cache and deduplication data cleared.")
+        return _r().get(f"job_status:{job_id}")
+    except:
+        return None
+
+
+def set_job_status(job_id: str, status: str, expire: int = 3600):
+    try:
+        _r().setex(f"job_status:{job_id}", expire, status)
+    except:
+        pass
+
+
+# ─── Maintenance ──────────────────────────────────────────────────────────────
+
+def clear_all_cache():
+    try:
+        _r().flushdb()
+        logger.info("All cache and deduplication data cleared.")
     except Exception as e:
-        print(f"[Redis] Error flushing DB: {e}")
+        logger.error("Error flushing Redis DB: %s", e)
