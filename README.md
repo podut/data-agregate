@@ -4,7 +4,7 @@
 DataAgregate este o platformă completă de agregare și procesare a știrilor, formată dintr-o aplicație mobilă Android modernă și un backend Dockerizat de înaltă performanță.
 
 <p align="center">
-  <a href="https://github.com/podut/data-agregate/releases/download/v1.0.5/DataAgregate-v1.0.5.apk">
+  <a href="https://github.com/podut/data-agregate/releases/download/v1.0.5/app-prod-release.apk">
     <img src="https://img.shields.io/badge/⬇️%20Download%20APK-v1.0.5-28b485?style=for-the-badge&logo=android&logoColor=white" alt="Download APK"/>
   </a>
 </p>
