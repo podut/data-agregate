@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.podut.dataagregate.core.ui.components.ArticleRow
+import com.podut.dataagregate.core.ui.AppError
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,28 +48,28 @@ fun CategoryArticlesScreen(
                 }
             )
         },
-        containerColor = Color(0xFF0F0F17)
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(Modifier.fillMaxSize().background(Color(0xFF0F0F17)).padding(padding)) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(padding)) {
             when {
                 s.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        CircularProgressIndicator(color = Color(0xFF8A2BE2))
-                        Text("Loading $category…", color = Color.LightGray, fontSize = 13.sp)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        Text("Loading $category…", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     }
                 }
                 s.error != null -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(s.error ?: "", color = Color(0xFFEF4444), fontSize = 13.sp)
+                        Text(s.error ?: "", color = AppError, fontSize = 13.sp)
                         Button(onClick = { viewModel.load(category) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A2BE2))
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) { Text("Retry") }
                     }
                 }
                 s.articles.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text("No articles yet for \"$category\"", color = Color.Gray)
+                    Text("No articles yet for \"$category\"", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 else -> LazyColumn(contentPadding = PaddingValues(bottom = 88.dp)) {
                     items(s.articles, key = { it.link }) { article ->
