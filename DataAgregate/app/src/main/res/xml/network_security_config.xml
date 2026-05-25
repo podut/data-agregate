@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- HTTPS pe prod — cleartext permis doar pe localhost pentru dev -->
+    <!-- pixcode.go.ro pe HTTP:8085 pana la activarea HTTPS -->
     <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">pixcode.go.ro</domain>
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">10.0.2.2</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
     </domain-config>
 
     <debug-overrides>
@@ -13,6 +17,7 @@
         </trust-anchors>
     </debug-overrides>
 
+    <!-- TODO: schimba in false dupa activarea HTTPS (bash init-ssl.sh) -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
