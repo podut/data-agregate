@@ -2,8 +2,10 @@ package com.podut.dataagregate.feature.news_feed
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.podut.dataagregate.core.database.dao.ArticleDao
 import com.podut.dataagregate.core.database.dao.SavedArticleDao
 import com.podut.dataagregate.core.database.dao.UserProfileDao
+import com.podut.dataagregate.core.database.entity.ArticleEntity
 import com.podut.dataagregate.core.database.entity.UserProfileEntity
 import com.podut.dataagregate.core.database.entity.toSavedEntity
 import com.podut.dataagregate.core.domain.model.TechNews
@@ -39,6 +41,7 @@ data class NewsFeedUiState(
 @HiltViewModel
 class NewsFeedViewModel @Inject constructor(
     private val apiService: IngestApiService,
+    private val articleDao: ArticleDao,
     private val savedDao: SavedArticleDao,
     private val profileDao: UserProfileDao,
     @Named("deviceId") private val deviceId: String
@@ -253,15 +256,16 @@ class NewsFeedViewModel @Inject constructor(
         _uiState.update { it.copy(isLoading = true, error = null) }
         apiService.getDigest(deviceId = deviceId, excludeSeen = excludeSeen).fold(
             onSuccess = { digest ->
+                // Salvăm în Room pentru offline cache
+                val cutoff = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L  // 7 zile
+                articleDao.deleteOlderThan(cutoff)
+                articleDao.insertArticles(digest.news.map { it.toEntity() })
+
                 rawArticles = digest.news
                 shownCount  = PAGE_SIZE
-                val wasRefreshing = _uiState.value.isRefreshing
-
                 applySmartSorting()
 
-                val syncTime     = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
-                val visibleCount = _uiState.value.heroArticles.size + _uiState.value.articles.size
-
+                val syncTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
                 _uiState.update { it.copy(
                     digestDate       = digest.digest_date,
                     isLoading        = false,
@@ -272,13 +276,42 @@ class NewsFeedViewModel @Inject constructor(
                 ) }
             },
             onFailure = { err ->
+                // Fallback: încarcă din Room DB cache
+                val cached = articleDao.getRecentArticles()
+                if (cached.isNotEmpty()) {
+                    rawArticles = cached.map { it.toTechNews() }
+                    shownCount  = PAGE_SIZE
+                    applySmartSorting()
+                }
                 _uiState.update { it.copy(
                     isLoading      = false,
                     isRefreshing   = false,
-                    error          = err.message,
-                    refreshMessage = "Could not refresh. Check connection."
+                    error          = if (cached.isEmpty()) err.message else null,
+                    refreshMessage = if (cached.isNotEmpty()) "Afișând știri salvate local." else "Nu s-a putut conecta la server."
                 ) }
             }
         )
     }
+
+    private fun TechNews.toEntity() = ArticleEntity(
+        url         = link,
+        title       = title,
+        summary     = summary,
+        category    = category,
+        imageUrl    = image,
+        publishedAt = System.currentTimeMillis(),
+        source      = source,
+        score       = score
+    )
+
+    private fun ArticleEntity.toTechNews() = TechNews(
+        title        = title,
+        summary      = summary,
+        image        = imageUrl,
+        link         = url,
+        source       = source,
+        category     = category,
+        score        = score,
+        publish_date = null
+    )
 }

@@ -10,5 +10,7 @@ data class ArticleEntity(
     val summary: String,
     val category: String,
     val imageUrl: String?,
-    val publishedAt: Long
+    val publishedAt: Long,
+    val source: String = "",
+    val score: Int = 0
 )

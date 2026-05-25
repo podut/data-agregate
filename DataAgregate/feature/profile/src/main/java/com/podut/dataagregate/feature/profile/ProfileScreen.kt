@@ -1,5 +1,7 @@
 package com.podut.dataagregate.feature.profile
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -43,6 +46,7 @@ fun ProfileScreen(
 ) {
     val uiState  by viewModel.uiState.collectAsState()
     val isDark   = LocalIsDarkTheme.current
+    val context  = LocalContext.current
 
     val bg       = appBg()
     val cardBg   = appCardBg()
@@ -229,6 +233,80 @@ fun ProfileScreen(
                         }
                         TextButton(onClick = { showResetDialog = true }) {
                             Text("Reset", color = AppError, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // ── About & Contact section ───────────────────────────────────────
+            Text("About & Contact", color = textSec, style = MaterialTheme.typography.labelLarge, letterSpacing = 0.8.sp)
+            Spacer(Modifier.height(12.dp))
+
+            Surface(
+                shape          = RoundedCornerShape(20.dp),
+                color          = cardBg,
+                tonalElevation = 0.dp,
+                border         = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+            ) {
+                Column {
+                    // Email contact
+                    Row(
+                        modifier          = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Email, null, tint = primary, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Contact & Support", color = onBg, style = MaterialTheme.typography.titleMedium)
+                            Text("podutpetru@gmail.com", color = textSec, style = MaterialTheme.typography.bodySmall)
+                        }
+                        TextButton(onClick = {
+                            val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:podutpetru@gmail.com"))
+                            intent.putExtra(Intent.EXTRA_SUBJECT, "DataAgregate Support")
+                            context.startActivity(Intent.createChooser(intent, "Send email"))
+                        }) {
+                            Text("Email", color = primary, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    HorizontalDivider(color = divider, modifier = Modifier.padding(horizontal = 16.dp))
+
+                    // Despre aplicație
+                    Row(
+                        modifier          = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Info, null, tint = primary, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Despre DataAgregate", color = onBg, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Agregator de știri tech cu sumarizare AI. Articolele sunt preluate din surse RSS publice și procesate cu Google Gemini 2.5.",
+                                color = textSec, style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = divider, modifier = Modifier.padding(horizontal = 16.dp))
+
+                    // Versiune
+                    Row(
+                        modifier          = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.NewReleases, null, tint = primary, modifier = Modifier.size(22.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Versiune", color = onBg, style = MaterialTheme.typography.titleMedium)
+                            Text("1.0.0 · Surse RSS actualizate automat", color = textSec, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

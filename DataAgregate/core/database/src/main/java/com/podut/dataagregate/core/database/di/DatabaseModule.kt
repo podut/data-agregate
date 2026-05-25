@@ -25,7 +25,12 @@ object DatabaseModule {
             AppDatabase::class.java,
             "data_agregate.db"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_4_5)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6
+            )
             .fallbackToDestructiveMigration()
             .build()
     }

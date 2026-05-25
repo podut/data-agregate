@@ -1,3 +1,4 @@
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -46,15 +47,15 @@ android {
         applicationId = "com.podut.dataagregate"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 5
+        versionName = "1.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            storeFile     = file(envProps.getProperty("KEYSTORE_PATH", ""))
+            storeFile     = File(envProps.getProperty("KEYSTORE_PATH", ""))
             storePassword = envProps.getProperty("KEYSTORE_PASSWORD", "")
             keyAlias      = envProps.getProperty("KEY_ALIAS", "")
             keyPassword   = envProps.getProperty("KEY_PASSWORD", "")

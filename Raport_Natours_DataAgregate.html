@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataAgregate | Raport Final Natours-Style</title>
+  
+  <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  
+  <!-- Mermaid.js -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: 'base',
+        themeVariables: {
+            primaryColor: '#55c57a',
+            primaryTextColor: '#fff',
+            primaryBorderColor: '#28b485',
+            lineColor: '#28b485',
+            secondaryColor: '#7ed56f',
+            tertiaryColor: '#f7f7f7'
+        }
+    });
+  </script>
+
+  <style>
+    /* NATOURS DESIGN SYSTEM */
+    :root {
+      --color-primary: #55c57a;
+      --color-primary-light: #7ed56f;
+      --color-primary-dark: #28b485;
+      --color-grey-light-1: #f7f7f7;
+      --color-grey-dark: #777;
+      --color-grey-dark-3: #333;
+      --color-white: #fff;
+    }
+
+    *, *::after, *::before {
+      margin: 0;
+      padding: 0;
+      box-sizing: inherit;
+    }
+
+    html { font-size: 62.5%; scroll-behavior: smooth; }
+
+    body {
+      box-sizing: border-box;
+      font-family: "Lato", sans-serif;
+      font-weight: 400;
+      line-height: 1.7;
+      color: var(--color-grey-dark);
+      padding: 3rem;
+    }
+
+    /* HEADER */
+    .header {
+      height: 95vh;
+      background-image: linear-gradient(
+        to right bottom,
+        rgba(126, 213, 111, 0.8),
+        rgba(40, 180, 133, 0.8)
+      ),
+      url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      background-position: top;
+      position: relative;
+      clip-path: polygon(0 0, 100% 0, 100% 75vh, 0 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .heading-primary {
+      color: var(--color-white);
+      text-transform: uppercase;
+      backface-visibility: hidden;
+      margin-bottom: 6rem;
+    }
+    .heading-primary--main { display: block; font-size: 6rem; font-weight: 400; letter-spacing: 3.5rem; animation: moveInLeft 1s ease-out; }
+    .heading-primary--sub { display: block; font-size: 2rem; font-weight: 700; letter-spacing: 1.75rem; animation: moveInRight 1s ease-out; }
+
+    @keyframes moveInLeft { 0% { opacity: 0; transform: translateX(-10rem); } 80% { transform: translateX(1rem); } 100% { opacity: 1; transform: translate(0); } }
+    @keyframes moveInRight { 0% { opacity: 0; transform: translateX(10rem); } 80% { transform: translateX(-1rem); } 100% { opacity: 1; transform: translate(0); } }
+
+    /* UTILITIES */
+    .u-center-text { text-align: center !important; }
+    .u-margin-bottom-big { margin-bottom: 8rem !important; }
+    .u-margin-bottom-medium { margin-bottom: 4rem !important; }
+    .u-margin-bottom-small { margin-bottom: 1.5rem !important; }
+
+    .heading-secondary {
+      font-size: 3.5rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      display: inline-block;
+      background-image: linear-gradient(to right, var(--color-primary-light), var(--color-primary-dark));
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: .2rem;
+      transition: all .2s;
+    }
+    .heading-secondary:hover {
+      transform: skewY(2deg) skewX(15deg) scale(1.1);
+      text-shadow: .5rem 1rem 2rem rgba(0,0,0, .2);
+    }
+    .heading-tertiary { font-size: 1.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 1.5rem; color: var(--color-grey-dark-3); }
+    .paragraph { font-size: 1.6rem; margin-bottom: 3rem; }
+
+    .row { max-width: 114rem; margin: 0 auto; display: flex; gap: 6rem; }
+    .col-1-of-2 { width: 50%; }
+
+    /* BUTTONS */
+    .btn:link, .btn:visited {
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 1.5rem 4rem;
+        display: inline-block;
+        border-radius: 10rem;
+        transition: all .2s;
+        position: relative;
+        font-size: 1.6rem;
+    }
+    .btn--white { background-color: var(--color-white); color: var(--color-grey-dark); }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 1rem 2rem rgba(0,0,0, .2); }
+    .btn:active { transform: translateY(-1px); box-shadow: 0 .5rem 1rem rgba(0,0,0, .2); }
+
+    /* LAYOUT GRIDS */
+    .grid { display: grid; gap: 6rem; }
+    .grid--3-cols { grid-template-columns: repeat(3, 1fr); }
+    .grid--2-cols { grid-template-columns: repeat(2, 1fr); }
+    .grid--center-v { align-items: center; }
+
+    /* SECTION ABOUT */
+    .section-about { background-color: var(--color-grey-light-1); padding: 25rem 0 15rem 0; margin-top: -20vh; }
+
+    /* SECTION FEATURES */
+    .section-features {
+      padding: 20rem 0;
+      background-image: linear-gradient(to right bottom, rgba(126, 213, 111, 0.8), rgba(40, 180, 133, 0.8)), url('https://images.unsplash.com/photo-1495020689067-958852a7765e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      transform: skewY(-7deg);
+      margin-top: -10rem;
+    }
+    .section-features > * { transform: skewY(7deg); }
+    .feature-box {
+      background-color: rgba(255, 255, 255, 0.8);
+      font-size: 1.5rem;
+      padding: 2.5rem;
+      text-align: center;
+      border-radius: 3px;
+      box-shadow: 0 1.5rem 4rem rgba(0,0,0, .15);
+      transition: transform .3s;
+    }
+    .feature-box:hover { transform: translateY(-1.5rem) scale(1.03); }
+    .feature-box__icon { font-size: 6rem; margin-bottom: .5rem; display: inline-block; background-image: linear-gradient(to right, var(--color-primary-light), var(--color-primary-dark)); -webkit-background-clip: text; color: transparent; }
+
+    /* SECTION UI MOCKUPS */
+    .section-ui { padding: 15rem 0; background-color: var(--color-white); }
+    .step-number { font-size: 8.6rem; font-weight: 300; color: #eee; margin-bottom: -1.2rem; display: block;}
+
+    .mockup-container { display: flex; justify-content: center; align-items: center; position: relative; }
+    .mockup-phone { width: 320px; height: 650px; background-color: #fff; border-radius: 40px; border: 12px solid #222; box-shadow: 0 2.4rem 4.8rem rgba(0,0,0,0.15); position: relative; overflow: hidden; display: flex; flex-direction: column; text-align: left;}
+    .mockup-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 25px; background-color: #222; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; z-index: 10; }
+    .mockup-header { background-color: var(--color-primary); padding: 40px 20px 20px 20px; color: white; font-weight: 600; font-size: 1.8rem; display: flex; justify-content: space-between; align-items: center; }
+    .mockup-body { background-color: #f4f4f4; flex: 1; padding: 15px; overflow-y: auto; }
+    .mockup-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .mockup-card-tag { font-size: 1rem; background: var(--color-primary-light); color: var(--color-white); padding: 3px 8px; border-radius: 10px; display: inline-block; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
+    .mockup-card-title { font-size: 1.4rem; font-weight: 700; color: var(--color-grey-dark-3); margin-bottom: 5px; line-height: 1.3; }
+    .mockup-card-summary { font-size: 1.1rem; color: var(--color-grey-dark); line-height: 1.4; }
+    .mockup-ai-badge { font-size: 1.2rem; color: var(--color-primary-dark); font-weight: bold; display: flex; align-items: center; gap: 5px; margin-top: 10px; }
+
+    .mockup-reader-header { background: white; padding: 40px 20px 20px 20px; border-bottom: 1px solid #eee; }
+    .mockup-reader-title { font-size: 1.8rem; font-weight: 700; color: var(--color-grey-dark-3); margin-bottom: 15px; }
+    .mockup-reader-ai-box { background: var(--color-grey-light-1); border-left: 4px solid var(--color-primary); padding: 15px; border-radius: 5px; margin-bottom: 20px; font-size: 1.2rem; line-height: 1.5; color: var(--color-primary-dark); font-weight: bold;}
+    .mockup-reader-text { font-size: 1.3rem; color: var(--color-grey-dark); line-height: 1.6; }
+    .mockup-reader-text p { margin-bottom: 15px; }
+
+    /* SECTION DEEP DIVE */
+    .section-deep-dive { padding: 15rem 0; background-color: var(--color-grey-light-1); }
+    .file-card {
+        background-color: var(--color-white);
+        box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.05);
+        border-radius: 3px;
+        padding: 3.2rem;
+        transition: all 0.3s;
+        border-top: 5px solid var(--color-primary);
+        text-align: left;
+    }
+    .file-card:hover {
+        transform: translateY(-1.2rem) scale(1.02);
+        box-shadow: 0 3.2rem 6.4rem rgba(0, 0, 0, 0.1);
+    }
+    .file-icon { font-size: 4rem; color: var(--color-primary); margin-bottom: 2.4rem; }
+    .file-name { font-size: 2.2rem; color: var(--color-grey-dark-3); font-weight: 700; margin-bottom: 1.6rem; font-family: monospace; }
+    .file-description { font-size: 1.6rem; line-height: 1.7; }
+    .file-tag { display: inline-block; padding: 0.4rem 0.8rem; font-size: 1.2rem; text-transform: uppercase; background-color: var(--color-primary-light); color: var(--color-white); border-radius: 100px; font-weight: 600; margin-bottom: 1.2rem; }
+
+    /* SECTION SCREENSHOTS */
+    .section-screenshots { padding: 15rem 0; background-color: var(--color-grey-light-1); }
+
+    .screenshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 4rem;
+      max-width: 114rem;
+      margin: 0 auto;
+    }
+
+    .screenshot-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .screenshot-frame {
+      width: 200px;
+      aspect-ratio: 9 / 16;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border-radius: 28px;
+      border: 3px solid rgba(85, 197, 122, 0.4);
+      box-shadow:
+        0 2rem 5rem rgba(0,0,0,0.25),
+        inset 0 0 0 1px rgba(255,255,255,0.05);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .screenshot-frame:hover {
+      transform: translateY(-8px) scale(1.03);
+      border-color: var(--color-primary);
+      box-shadow: 0 3rem 6rem rgba(85, 197, 122, 0.25);
+    }
+
+    .screenshot-frame::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 80px; height: 20px;
+      background: #0a0a14;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      z-index: 10;
+    }
+
+    .screenshot-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 26px;
+      display: block;
+    }
+
+    .screenshot-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      padding: 2rem;
+      text-align: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .screenshot-placeholder-icon {
+      font-size: 4rem;
+      background-image: linear-gradient(to bottom, var(--color-primary-light), var(--color-primary-dark));
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .screenshot-placeholder-text {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.4;
+    }
+
+    .screenshot-placeholder-hint {
+      font-size: 1rem;
+      color: rgba(85, 197, 122, 0.5);
+      border: 1px dashed rgba(85, 197, 122, 0.3);
+      padding: 0.4rem 0.8rem;
+      border-radius: 5px;
+    }
+
+    .screenshot-label {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--color-grey-dark-3);
+      text-align: center;
+    }
+
+    .screenshot-sublabel {
+      font-size: 1.2rem;
+      color: var(--color-grey-dark);
+      text-align: center;
+      margin-top: -0.8rem;
+    }
+
+    .screenshot-section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--color-primary-dark);
+      letter-spacing: 0.2rem;
+      margin-bottom: 3rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--color-primary-light);
+      max-width: 114rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* SECTION MERMAID */
+    .section-mermaid { padding: 15rem 0; background-color: var(--color-white); }
+    .mermaid-container {
+        background: var(--color-grey-light-1);
+        padding: 4rem;
+        border-radius: 3px;
+        box-shadow: 0 1.5rem 4rem rgba(0,0,0, .05);
+        margin-bottom: 8rem;
+    }
+    .mermaid-desc { font-size: 1.6rem; margin-bottom: 3rem; }
+    .mermaid { width: 100%; overflow: auto; background: #fff; padding: 2rem; border-radius: 5px; box-shadow: 0 1rem 2rem rgba(0,0,0, .05); }
+
+  </style>
+</head>
+<body>
+  
+  <header class="header">
+    <div class="header__text-box">
+      <h1 class="heading-primary">
+        <span class="heading-primary--main">DataAgregate</span>
+        <span class="heading-primary--sub">Raport Final - Ecosistem Complet</span>
+      </h1>
+      <a href="#about" class="btn btn--white btn--animated" style="margin-right:2rem;">Descoperă Arhitectura</a>
+      <a href="#screenshots" class="btn btn--white btn--animated" style="background: rgba(255,255,255,0.15); color: white; border: 2px solid white;">📸 Galerie Screenshots</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- ABOUT SECTION -->
+    <section class="section-about" id="about">
+      <div class="u-center-text u-margin-bottom-big">
+        <h2 class="heading-secondary">Viziune de Ansamblu</h2>
+      </div>
+
+      <div class="row">
+        <div class="col-1-of-2">
+          <h3 class="heading-tertiary">Backend: rss-ingestor-service</h3>
+          <p class="paragraph">
+            O arhitectură modernă bazată pe <strong>FastAPI</strong> și <strong>Python</strong> care automatizează colectarea știrilor prin feed-uri RSS și Google News. Fiecare articol este procesat în fundal folosind modele de limbaj avansate (Google Gemini).
+          </p>
+
+          <h3 class="heading-tertiary">Frontend: Android DataAgregate</h3>
+          <p class="paragraph">
+            Aplicație nativă dezvoltată cu <strong>Kotlin</strong> și <strong>Jetpack Compose</strong>, oferind o experiență utilizator fluidă, tematică Material 3 și suport offline complet prin Room Database.
+          </p>
+        </div>
+        <div class="col-1-of-2">
+            <div style="background: white; padding: 3rem; border-radius: 3px; box-shadow: 0 1.5rem 4rem rgba(0,0,0,.1); border-top: 5px solid var(--color-primary-dark);">
+                <h4 class="heading-tertiary">Stack Tehnologic</h4>
+                <ul style="font-size: 1.6rem; list-style: none; line-height: 2;">
+                    <li><ion-icon name="logo-python" style="color: #3498db;"></ion-icon> Python 3.10+ & FastAPI</li>
+                    <li><ion-icon name="sparkles" style="color: #9b59b6;"></ion-icon> Google Gemini 2.5 Pro</li>
+                    <li><ion-icon name="logo-android" style="color: #2ecc71;"></ion-icon> Kotlin & Jetpack Compose</li>
+                    <li><ion-icon name="server" style="color: #e67e22;"></ion-icon> SQLite & Room Persistence</li>
+                </ul>
+            </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="section-features">
+        <div class="row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4rem;">
+            <div class="feature-box">
+                <ion-icon name="rocket-outline" class="feature-box__icon"></ion-icon>
+                <h3 class="heading-tertiary">Performanță</h3>
+                <p class="feature-box__text">FastAPI asigură latențe minime pentru aplicația mobilă.</p>
+            </div>
+            <div class="feature-box">
+                <ion-icon name="sparkles-outline" class="feature-box__icon"></ion-icon>
+                <h3 class="heading-tertiary">AI Native</h3>
+                <p class="feature-box__text">Sumarizare și scoring automat direct în backend.</p>
+            </div>
+            <div class="feature-box">
+                <ion-icon name="cloud-offline-outline" class="feature-box__icon"></ion-icon>
+                <h3 class="heading-tertiary">Offline First</h3>
+                <p class="feature-box__text">Citește știrile salvate chiar și fără conexiune.</p>
+            </div>
+            <div class="feature-box">
+                <ion-icon name="color-palette-outline" class="feature-box__icon"></ion-icon>
+                <h3 class="heading-tertiary">Modern UI</h3>
+                <p class="feature-box__text">Design bazat pe Material 3 și animații fluide.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- UI MOCKUPS SECTION -->
+    <section class="section-ui">
+        <div class="row">
+            <div class="u-center-text u-margin-bottom-big" style="width: 100%;">
+                <h2 class="heading-secondary">Interfața Grafică Mobile</h2>
+            </div>
+        </div>
+        
+        <div class="row" style="margin-bottom: 15rem;">
+            <div class="grid grid--2-cols grid--center-v">
+                <div>
+                    <span class="step-number">01</span>
+                    <h3 class="heading-tertiary u-margin-bottom-small">Modulul :feature:news_feed</h3>
+                    <p class="paragraph">
+                        Ecranul principal dezvoltat complet în <strong>Jetpack Compose</strong>. Afișează articolele prelucrate de backend sub formă de carduri. Utilizează <code>NewsFeedViewModel.kt</code> pentru a extrage datele locale (via <code>core:database</code> Room DB), menținând funcționalitatea <strong>Offline-First</strong>. Comunicațiile HTTP se realizează prin Retrofit.
+                    </p>
+                </div>
+                <div class="mockup-container">
+                    <div class="mockup-phone">
+                        <div class="mockup-notch"></div>
+                        <div class="mockup-header" style="background: #2c3e50;">
+                            <span>Ultimele Știri</span>
+                            <ion-icon name="search-outline"></ion-icon>
+                        </div>
+                        <div class="mockup-body" style="background: #ecf0f1;">
+                            <div class="mockup-card">
+                                <span class="mockup-card-tag" style="background:#e74c3c;">Urgent</span>
+                                <h4 class="mockup-card-title">Vulnerabilitate critică descoperită în OpenSSL</h4>
+                                <p class="mockup-card-summary">Specialiștii recomandă actualizarea imediată a serverelor...</p>
+                                <div class="mockup-ai-badge" style="color: #e74c3c;"><ion-icon name="alert-circle"></ion-icon> AI Score: 99</div>
+                            </div>
+                            <div class="mockup-card">
+                                <span class="mockup-card-tag" style="background:var(--color-primary);">Programare</span>
+                                <h4 class="mockup-card-title">Cum să folosești corect Coroutines în 2026</h4>
+                                <p class="mockup-card-summary">Ghid complet despre fluxurile asincrone în Android.</p>
+                                <div class="mockup-ai-badge" style="color: var(--color-primary-dark);"><ion-icon name="sparkles"></ion-icon> AI Score: 91</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="grid grid--2-cols grid--center-v">
+                <div class="mockup-container">
+                    <div class="mockup-phone">
+                        <div class="mockup-notch"></div>
+                        <div class="mockup-header" style="background: var(--color-primary-dark);">
+                            <ion-icon name="arrow-back-outline"></ion-icon>
+                            <span>Citire</span>
+                            <ion-icon name="bookmark-outline"></ion-icon>
+                        </div>
+                        <div class="mockup-body" style="padding:0; background: white;">
+                            <div class="mockup-reader-header">
+                                <span class="mockup-card-tag" style="background:var(--color-primary);">Programare</span>
+                                <h1 class="mockup-reader-title">Cum să folosești corect Coroutines în 2026</h1>
+                            </div>
+                            <div style="padding: 20px;">
+                                <div class="mockup-reader-ai-box">
+                                    <ion-icon name="sparkles"></ion-icon> Rezumat AI: Acest articol detaliază cele mai bune practici pentru folosirea Kotlin Coroutines, punând accent pe noul sistem de Dispatchers din 2026.
+                                </div>
+                                <div class="mockup-reader-text">
+                                    <p>În ultimii ani, modul în care tratăm operațiunile asincrone în ecosistemul Android s-a schimbat radical...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <span class="step-number">02</span>
+                    <h3 class="heading-tertiary u-margin-bottom-small">ArticleReaderScreen & :core:ui</h3>
+                    <p class="paragraph">
+                        Când utilizatorul accesează un articol, citește <strong>rezumatul generat de AI</strong> afișat proeminent la început. Modulul <code>:core:ui</code> oferă componentele reutilizabile de design, aplicând tematica <strong>Material Design 3</strong> adaptată pentru o experiență de citire ergonomică.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SCREENSHOTS GALERIE -->
+    <section class="section-screenshots" id="screenshots">
+      <div class="u-center-text u-margin-bottom-big">
+        <h2 class="heading-secondary">Galerie Screenshots Aplicație</h2>
+      </div>
+
+      <!-- ─── ONBOARDING ─── -->
+      <p class="screenshot-section-title">Onboarding</p>
+      <div class="screenshots-grid" style="margin-bottom: 8rem;">
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">Onboarding<br>Pasul 1 – Selectare Interese</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Onboarding — Pasul 1</p>
+          <p class="screenshot-sublabel">Selectare interese (AI, Dev, Tech…)</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">Onboarding<br>Pasul 2 – Selectare Limbă</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Onboarding — Pasul 2</p>
+          <p class="screenshot-sublabel">Selectare limbă & confirmare</p>
+        </div>
+
+      </div>
+
+      <!-- ─── FEED PRINCIPAL ─── -->
+      <p class="screenshot-section-title">Feed Principal (News Feed)</p>
+      <div class="screenshots-grid" style="margin-bottom: 8rem;">
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">NewsFeedScreen<br>Lista articole</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Feed – Articole Principale</p>
+          <p class="screenshot-sublabel">Carduri cu AI Score & categorie</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">NewsFeedScreen<br>Shimmer loading</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Feed – Loading Shimmer</p>
+          <p class="screenshot-sublabel">State de încărcare animat</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">NewsFeedScreen<br>Dark / Light Theme</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Feed – Temă Light</p>
+          <p class="screenshot-sublabel">Comutare Dark ↔ Light Material 3</p>
+        </div>
+
+      </div>
+
+      <!-- ─── EXPLOREAZĂ ─── -->
+      <p class="screenshot-section-title">Explorează Categorii</p>
+      <div class="screenshots-grid" style="margin-bottom: 8rem;">
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">ExploreScreen<br>Grid categorii</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Explorează – Grid</p>
+          <p class="screenshot-sublabel">Toate categoriile disponibile</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">CategoryArticlesScreen<br>Articole pe categorie</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Articole Categorie</p>
+          <p class="screenshot-sublabel">Ex: Tech, AI, Security…</p>
+        </div>
+
+      </div>
+
+      <!-- ─── CITITOR ARTICOL ─── -->
+      <p class="screenshot-section-title">Cititor Articol cu AI</p>
+      <div class="screenshots-grid" style="margin-bottom: 8rem;">
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">ArticleReaderScreen<br>Header + Rezumat AI</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Reader – Top (Rezumat AI)</p>
+          <p class="screenshot-sublabel">Titlu + box rezumat generat Gemini</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">ArticleReaderScreen<br>Conținut articol scroll</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Reader – Conținut</p>
+          <p class="screenshot-sublabel">Text articol original cu scroll</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">ArticleReaderScreen<br>Buton Bookmark</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Reader – Salvare</p>
+          <p class="screenshot-sublabel">Acțiune salvare / open browser</p>
+        </div>
+
+      </div>
+
+      <!-- ─── ARTICOLE SALVATE ─── -->
+      <p class="screenshot-section-title">Articole Salvate (Offline)</p>
+      <div class="screenshots-grid" style="margin-bottom: 8rem;">
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">SavedScreen<br>Lista articole salvate</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Salvate – Cu Articole</p>
+          <p class="screenshot-sublabel">Persistate local în Room DB</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">SavedScreen<br>Empty state</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Salvate – Empty State</p>
+          <p class="screenshot-sublabel">Niciun articol salvat încă</p>
+        </div>
+
+      </div>
+
+      <!-- ─── FAB & BOTTOM SHEETS ─── -->
+      <p class="screenshot-section-title">FAB Speed Dial & Bottom Sheets</p>
+      <div class="screenshots-grid" style="margin-bottom: 8rem;">
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">FAB expanded<br>Speed dial menu</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">FAB – Speed Dial</p>
+          <p class="screenshot-sublabel">Adaugă RSS / Adaugă Interes</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">ModalBottomSheet<br>Adaugă Sursă RSS</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Bottom Sheet – RSS</p>
+          <p class="screenshot-sublabel">Adaugă / toggle / șterge surse RSS</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">ModalBottomSheet<br>Adaugă Interes</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Bottom Sheet – Interese</p>
+          <p class="screenshot-sublabel">Gestionare categorii preferate</p>
+        </div>
+
+      </div>
+
+      <!-- ─── SETĂRI / PROFIL ─── -->
+      <p class="screenshot-section-title">Setări & Profil</p>
+      <div class="screenshots-grid" style="margin-bottom: 8rem;">
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">ProfileScreen<br>Setări generale</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Setări – Generale</p>
+          <p class="screenshot-sublabel">Toggle temă, reset onboarding</p>
+        </div>
+
+        <div class="screenshot-item">
+          <div class="screenshot-frame">
+            <div class="screenshot-placeholder">
+              <ion-icon name="image-outline" class="screenshot-placeholder-icon"></ion-icon>
+              <p class="screenshot-placeholder-text">NavigationRail<br>Tablet / Landscape</p>
+              <span class="screenshot-placeholder-hint">9:16 screenshot</span>
+            </div>
+          </div>
+          <p class="screenshot-label">Nav Rail – Tablet</p>
+          <p class="screenshot-sublabel">Navigare adaptivă pe ecrane mari</p>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- BACKEND DEEP DIVE -->
+    <section class="section-deep-dive">
+        <div class="row">
+            <div class="u-center-text u-margin-bottom-big" style="width: 100%;">
+                <h2 class="heading-secondary">Backend Deep Dive</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="grid grid--3-cols">
+                <!-- main.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="rocket-outline"></ion-icon>
+                    <span class="file-tag">Core / API</span>
+                    <p class="file-name">main.py</p>
+                    <p class="file-description">Punctul de intrare al aplicației. Configurează FastAPI, gestionează ciclul de viață pentru pornirea scheduler-ului și definește rutele REST.</p>
+                </div>
+                <!-- ai_service.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="sparkles-outline"></ion-icon>
+                    <span class="file-tag">Intelligence</span>
+                    <p class="file-name">ai_service.py</p>
+                    <p class="file-description">Inima inteligentă a sistemului. Gestionează comunicarea cu Google Gemini. Generează rezumate în română și calculează scoruri.</p>
+                </div>
+                <!-- rss_service.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="library-outline"></ion-icon>
+                    <span class="file-tag">Networking</span>
+                    <p class="file-name">rss_service.py</p>
+                    <p class="file-description">Colectează datele brute. Parsează feed-urile RSS folosind feedparser și coordonează fluxul de procesare al articolelor.</p>
+                </div>
+                <!-- database.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="database-outline"></ion-icon>
+                    <span class="file-tag">Persistence</span>
+                    <p class="file-name">database.py</p>
+                    <p class="file-description">Abstracția bazei de date SQLite. Conține funcțiile CRUD pentru articole, surse RSS și setările globale ale aplicației.</p>
+                </div>
+                <!-- scheduler_task.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="alarm-outline"></ion-icon>
+                    <span class="file-tag">Automation</span>
+                    <p class="file-name">scheduler_task.py</p>
+                    <p class="file-description">Gestionează job-urile în fundal cu APScheduler, asigurând că știrile sunt actualizate automat la intervale regulate.</p>
+                </div>
+                <!-- utils.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="build-outline"></ion-icon>
+                    <span class="file-tag">Helper</span>
+                    <p class="file-name">utils.py</p>
+                    <p class="file-description">Funcții auxiliare: curățarea conținutului HTML, generarea URL-urilor Google News și algoritmi de ranking a articolelor.</p>
+                </div>
+                <!-- config.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="settings-outline"></ion-icon>
+                    <span class="file-tag">Configuration</span>
+                    <p class="file-name">config.py</p>
+                    <p class="file-description">Centralizează setările mediului: chei API, căi către baza de date (Docker/Local) și prompt-urile pentru AI.</p>
+                </div>
+                <!-- backfill_images.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="image-outline"></ion-icon>
+                    <span class="file-tag">Script</span>
+                    <p class="file-name">backfill_images.py</p>
+                    <p class="file-description">Script asincron care face scraping pentru a recupera imaginile lipsă ale articolelor deja procesate.</p>
+                </div>
+                <!-- migrate_db.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="construct-outline"></ion-icon>
+                    <span class="file-tag">DevOps</span>
+                    <p class="file-name">migrate_db.py</p>
+                    <p class="file-description">Evoluția schemei bazei de date. Permite adăugarea de coloane noi fără pierderi de date.</p>
+                </div>
+                 <!-- models.py -->
+                 <div class="file-card">
+                    <ion-icon class="file-icon" name="code-slash-outline"></ion-icon>
+                    <span class="file-tag">Schema</span>
+                    <p class="file-name">models.py</p>
+                    <p class="file-description">Modele Pydantic pentru validarea formatului cererilor API venite de la aplicația mobilă.</p>
+                </div>
+                <!-- test_api.py -->
+                <div class="file-card">
+                    <ion-icon class="file-icon" name="flask-outline"></ion-icon>
+                    <span class="file-tag">Testing</span>
+                    <p class="file-name">test_api.py</p>
+                    <p class="file-description">Script de testare automatizată care simulează interacțiunile aplicației cu serverul FastAPI.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MERMAID DIAGRAMS -->
+    <section class="section-mermaid">
+        <div class="row">
+            <div class="u-center-text u-margin-bottom-big" style="width: 100%;">
+                <h2 class="heading-secondary">Arhitectură Logicală (Mermaid)</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            <div style="width: 100%;">
+                
+                <!-- System Canvas -->
+                <div class="mermaid-container">
+                    <h3 class="heading-tertiary">Full System Canvas</h3>
+                    <p class="mermaid-desc">Viziunea de ansamblu: Frontend (Android) -> Backend (FastAPI) -> DB & AI Exterioare.</p>
+                    <div class="mermaid">
+graph TB
+    subgraph Mobile_App [Aplicație Android - Kotlin]
+        UI[NewsFeedScreen] --> VM[ViewModel]
+        VM --> Repo[Repository]
+        Repo --> Network[Retrofit Client]
+        Repo --> Room[(Local Room DB)]
+    end
+
+    subgraph Backend_Server [rss-ingestor-service - FastAPI]
+        API[REST API Endpoints] --> DB_Py[database.py]
+        API --> AI_Py[ai_service.py]
+        Sched[scheduler_task.py] --> RSS_Py[rss_service.py]
+        RSS_Py --> DB_Py
+        AI_Py --> DB_Py
+    end
+
+    subgraph Storage [Persistență Date]
+        SQLite[(SQLite: data_agregate.db)]
+    end
+
+    subgraph External [Lumea Exterioară]
+        RSS_F[Surse RSS / Bloguri]
+        G_AI[Google Gemini AI]
+    end
+
+    Network -- "REST API" --> API
+    DB_Py -- "SQL" --> SQLite
+    RSS_Py -- "Scraping" --> RSS_F
+    AI_Py -- "GenAI API" --> G_AI
+
+    style Mobile_App fill:#f7f7f7,stroke:#55c57a,stroke-width:2px
+    style Backend_Server fill:#fff,stroke:#28b485,stroke-width:2px
+    style Storage fill:#eee,stroke:#333,stroke-width:2px
+    style External fill:#fff,stroke:#777,stroke-dasharray: 5 5
+                    </div>
+                </div>
+
+                <!-- main.py -->
+                <div class="mermaid-container">
+                    <h3 class="heading-tertiary">Flow: main.py</h3>
+                    <div class="mermaid">
+graph TD
+    A[Start App] --> B{Lifespan Context}
+    B --> C[Init DB & Fix Data]
+    B --> D[Start APScheduler]
+    E[Client Android] -- POST /ingest --> F[Add Background Task]
+    F --> G[process_feeds_task]
+    E -- GET /articles --> I[Fetch from SQLite]
+    I --> J[Rank Articles with utils.py]
+    J --> K[Return JSON]
+                    </div>
+                </div>
+
+                <!-- ai_service.py -->
+                <div class="mermaid-container">
+                    <h3 class="heading-tertiary">Pipeline AI: ai_service.py</h3>
+                    <div class="mermaid">
+graph LR
+    A[Pending Article] --> B{Model Selector}
+    B -- Primary --> C[Gemini 2.5 Flash]
+    B -- Fallback --> D[DeepSeek Chat]
+    C & D --> E[Send ENRICH_PROMPT]
+    E --> F[Parse JSON Response]
+    F --> G{Valid JSON?}
+    G -- Yes --> H[Update DB: Score, Summary, Tags]
+    G -- No --> I[Retry / Skip]
+                    </div>
+                </div>
+
+                <!-- rss_service.py -->
+                <div class="mermaid-container">
+                    <h3 class="heading-tertiary">Ingestie: rss_service.py</h3>
+                    <div class="mermaid">
+graph TD
+    A[Input: List of URLs] --> B[Loop URLs]
+    B --> C[feedparser.parse]
+    C --> D[Loop Entries]
+    D --> E{Published < 24h?}
+    E -- Yes --> F[Clean HTML & Extract Media]
+    F --> G[Collect Batch of 50]
+    G --> H[INSERT OR IGNORE into SQLite]
+    H --> I[Call enrich_pending_articles]
+                    </div>
+                </div>
+
+                <!-- database.py -->
+                <div class="mermaid-container">
+                    <h3 class="heading-tertiary">Schema: database.py</h3>
+                    <div class="mermaid">
+classDiagram
+    class pending_articles {
+        +int id
+        +string title
+        +string url UNIQUE
+        +string category
+        +string raw_content
+        +int score
+    }
+    class rss_sources {
+        +string url
+        +string category
+        +boolean is_active
+    }
+    class device_seen {
+        +string device_id
+        +string url
+        +timestamp seen_at
+    }
+    pending_articles "1" -- "0..*" device_seen : tracked
+                    </div>
+                </div>
+
+                 <!-- scheduler_task.py -->
+                 <div class="mermaid-container">
+                    <h3 class="heading-tertiary">Automatizare: scheduler_task.py</h3>
+                    <div class="mermaid">
+graph LR
+    A[Trigger Interval] --> B[Get Active Sources]
+    B --> C[Group by Category]
+    C --> D[Call process_feeds_task]
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+  </main>
+
+  <footer style="background-color: var(--color-grey-dark-3); padding: 10rem 0; color: white; text-align: center;">
+      <p style="font-size: 1.4rem;">&copy; 2026 DataAgregate Architecture Report. Design inspirat de cursul Natours.</p>
+  </footer>
+
+</body>
+</html>

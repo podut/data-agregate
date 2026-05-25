@@ -5,8 +5,9 @@ services:
       dockerfile: Dockerfile
     container_name: data-agregate-api
     restart: always
-    ports:
-      - "8085:8085"
+    # portul 8085 nu mai e expus public — Nginx e singurul punct de intrare
+    expose:
+      - "8085"
     env_file:
       - .env
     environment:
@@ -19,6 +20,33 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - app-net
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: data-agregate-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot-etc:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    depends_on:
+      - app
+    networks:
+      - app-net
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: data-agregate-certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    # Rulează în modul sleep — pornit manual cu "docker compose run certbot ..."
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done"
     networks:
       - app-net
 
@@ -65,3 +93,5 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  certbot-etc:
+  certbot-www:
